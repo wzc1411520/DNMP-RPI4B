@@ -1,0 +1,1 @@
+WARNING 2023-03-27 15:01:02,774 django.request Bad Request: /api/instance/31eca28d-22d8-47aa-ba9f-e6ae82510dca/redisgraph/check-module-loaded/

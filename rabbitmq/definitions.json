@@ -1,0 +1,146 @@
+{
+  "rabbit_version": "3.11.11",
+  "rabbitmq_version": "3.11.11",
+  "product_name": "RabbitMQ",
+  "product_version": "3.11.11",
+  "users": [
+    {
+      "name": "admin",
+      "password_hash": "odTVBH8h7ayNA+OFBY7zsp7+XpExjSIriX7nx6i4EhMcg2FH",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    },
+    {
+      "name": "guest",
+      "password_hash": "odTVBH8h7ayNA+OFBY7zsp7+XpExjSIriX7nx6i4EhMcg2FH",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "queue"
+    },
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "admin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "admin",
+      "vhost": "queue",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [
+  ],
+  "global_parameters": [
+    {
+      "name": "cluster_name",
+      "value": "rabbit@cluster"
+    }
+  ],
+  "policies": [
+  ],
+  "queues": [
+    {
+      "name": "TCT_DET_MANAGER_QUEUE",
+      "vhost": "/",
+      "durable": false,
+      "auto_delete": true,
+      "arguments": {
+      }
+    },
+    {
+      "name": "bowel_sound.audios",
+      "vhost": "/",
+      "durable": false,
+      "auto_delete": false,
+      "arguments": {
+      }
+    },
+    {
+      "name": "bowel_sound.detections",
+      "vhost": "/",
+      "durable": false,
+      "auto_delete": false,
+      "arguments": {
+      }
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "queueExchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {
+      }
+    }
+  ],
+  "bindings": [
+    {
+      "source": "amq.topic",
+      "vhost": "/",
+      "destination": "stomp-subscription-DEURt8vJzJ5uJ9_x9WosoA",
+      "destination_type": "queue",
+      "routing_key": "notify.1",
+      "arguments": {
+      }
+    },
+    {
+      "source": "amq.topic",
+      "vhost": "/",
+      "destination": "stomp-subscription-t2txbf6lGhRqZfhfQjsf5w",
+      "destination_type": "queue",
+      "routing_key": "notify.1",
+      "arguments": {
+      }
+    },
+    {
+      "source": "amq.topic",
+      "vhost": "/",
+      "destination": "stomp-subscription-uaMlfDxI-lmWtqvpTJ0K0A",
+      "destination_type": "queue",
+      "routing_key": "notify.1",
+      "arguments": {
+      }
+    },
+    {
+      "source": "amq.topic",
+      "vhost": "/",
+      "destination": "stomp-subscription-zn3gjnv-gHgrkJyyaNieDA",
+      "destination_type": "queue",
+      "routing_key": "notify.15",
+      "arguments": {
+      }
+    },
+    {
+      "source": "amq.topic",
+      "vhost": "/",
+      "destination": "stomp-subscription-L7IlgPJaFZlLY76dqmLVTg",
+      "destination_type": "queue",
+      "routing_key": "notify.9",
+      "arguments": {
+      }
+    }
+  ]
+}

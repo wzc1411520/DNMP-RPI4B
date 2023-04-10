@@ -1,0 +1,390 @@
+version: '3'
+services:
+  redis:
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    environment:
+      - appendonly=yes
+      - TZ=Asia/Shanghai
+      - LANG=en_US.UTF-8
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:rw
+      - ./redis/data:/data:rw
+    image: redis
+    container_name: redis
+
+  redisinsight:
+    image: 'redislabs/redisinsight:latest'
+    container_name: redisinsight
+    restart: always
+    ports:
+      - 8001:8001
+    volumes:
+      - ./redis/redisinsight/data:/db:rw
+
+  mysql:
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/my.cnf:ro
+      - ./mysql/log:/var/log/mysql
+    ports:
+      - "3306:3306"
+    image: mysql:latest
+    container_name: mysql
+
+  ### PHP-FPM ##############################################
+  php82:
+    container_name: php82
+    image: wzc1411520/php
+    depends_on:
+      - redis
+      - mysql
+    links:
+      - redis
+      - mysql
+      - #    volumes:
+        #      - ../applications:/server:rw
+        #      - ./php74/php7.4.ini:/usr/local/etc/php/php.ini:ro
+        #      - ./php74/laravel.ini /usr/local/etc/php/conf.d/laravel.ini
+        #      - ./php74/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini
+
+  php74:
+    container_name: php74
+    build:
+      context: ./php74
+    volumes:
+      - ../applications:/server:rw
+  #      - ./php74/php7.4.ini:/usr/local/etc/php/php.ini:ro
+  #      - ./php74/laravel.ini /usr/local/etc/php/conf.d/laravel.ini
+  #      - ./php74/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini
+
+  php80:
+    container_name: php80
+    build:
+      context: ./php8.0
+    restart: always
+    links:
+      - redis
+      - mysql
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    ports:
+      - "8111:8000"
+    volumes:
+      - ../learnDemo/hyperf:/hyperf:rw
+      - ../learnDemo/laravel9:/server:rw
+      - ../learnDemo/gdoo:/serverGDOO:rw
+      - ./php8.0/php/php.ini:/usr/local/etc/php/php.ini:ro
+      - ./php8.0/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+
+  php:
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    environment:
+      - TZ=Asia/Shanghai
+    links:
+      - redis
+      - mysql
+      - es
+      - rabbitmq
+    depends_on:
+      - redis
+      - mysql
+      - es
+      - rabbitmq
+    volumes:
+      - ../applications:/server:rw
+      - ./php/php.ini:/usr/local/etc/php/php.ini:ro
+      - ./php/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+      - ./php/policy.xml:/etc/ImageMagick-6/policy.xml
+      - ./php/cron/:/var/spool/cron:ro
+    image: zengfa/php:72
+    ports:
+      - "8000:8000"
+    container_name: php
+
+  #  queue:
+  #    restart: always
+  #    logging:
+  #      driver: json-file
+  #      options:
+  #        max-size: "100M"
+  #        max-file: "10"
+  #    environment:
+  #      - TZ=Asia/Shanghai
+  #      - APP_URL=http://localhost    # 改成自己的ip
+  #    links:
+  #      - redis
+  #      - mysql
+  #      - es
+  #      - rabbitmq
+  #    depends_on:
+  #      - redis
+  #      - mysql
+  #      - es
+  #      - rabbitmq
+  #    volumes:
+  #      - ../:/server:rw
+  #      - ./php/php.ini:/usr/local/etc/php/php.ini:ro
+  #      - ./php/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+  #      - ./php/policy.xml:/etc/ImageMagick-6/policy.xml
+  #    image: zengfa/php:72
+  #    container_name: queue
+  #    entrypoint: php /server/artisan queue:work --daemon --queue=high,default,low --timeout=120  --tries=5
+
+  rabbitmq:
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    environment:
+      RABBITMQ_NODENAME: rabbitmq
+    volumes:
+      - ./rabbitmq/plugins.erl:/etc/rabbitmq/enabled_plugins
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
+      - ./rabbitmq/rabbitmq.config:/etc/rabbitmq/rabbitmq.config
+      - ./rabbitmq/cert/hzztai.pem:/cert/hzztai.pem:ro
+      - ./rabbitmq/cert/hzztai.key:/cert/hzztai.key:ro
+    ports:
+      - "5672:5672"
+      - "15674:15674"
+      - "15672:15672"
+      - "15675:15675"
+    build: ./rabbitmq/
+    image: rabbitmq:pis
+    container_name: rabbitmq
+
+  es:
+    #    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./es/ik/:/usr/share/elasticsearch/plugins/ik:rw
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    image: elasticsearch:6.7.0
+    container_name: es
+
+  nginx80:
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    ports:
+      - "8100:8100"
+      - "8200:8200"
+    depends_on:
+      - php80
+    links:
+      - php80
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ../learnDemo/laravel9:/server:rw
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/cert:/etc/nginx/cert:ro
+    image: zengfa/tengine
+    container_name: nginx80
+
+  nginx:
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - php
+    links:
+      - php
+      - echo
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ../:/server:rw
+      - ../learnDemo/laravel9/laravel:/laravel:rw
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/cert:/etc/nginx/cert:ro
+    image: zengfa/tengine
+    container_name: nginx
+
+  #OpenResty® 是一个基于 Nginx 与 Lua 的高性能 Web 平台，其内部集成了大量精良的 Lua 库、第三方模块以及大多数的依赖项。用于方便地搭建能够处理超高并发、扩展性极高的动态 Web 应用、Web 服务和动态网关。
+  #OpenResty® 通过汇聚各种设计精良的 Nginx 模块（主要由 OpenResty 团队自主开发），从而将 Nginx 有效地变成一个强大的通用 Web 应用平台。这样，Web 开发人员和系统工程师可以使用 Lua 脚本语言调动 Nginx 支持的各种 C 以及 Lua 模块，快速构造出足以胜任 10K 乃至 1000K 以上单机并发连接的高性能 Web 应用系统。
+  #OpenResty® 的目标是让你的Web服务直接跑在 Nginx 服务内部，充分利用 Nginx 的非阻塞 I/O 模型，不仅仅对 HTTP 客户端请求,甚至于对远程后端诸如 MySQL、PostgreSQL、Memcached 以及 Redis 等都进行一致的高性能响应。
+  openresty:
+    restart: always
+    depends_on:
+      - php
+    links:
+      - php
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    ports:
+      - "8180-8199:8180-8199"
+    volumes:
+      - ../:/server:rw
+      - ./openresty/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./openresty/conf.d:/etc/nginx/conf.d:ro
+      - ./openresty/cert:/etc/nginx/cert:ro
+    image: openresty/openresty
+    container_name: openresty
+
+  echo:
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    image: zengfa/laravel-echo-server
+    environment:
+      - LARAVEL_ECHO_SERVER_HOST=0.0.0.0
+      - ECHO_ALLOW_ORIGIN=0.0.0.0
+    links:
+      - redis
+    depends_on:
+      - redis
+    ports:
+      - "6001:6001"
+    container_name: echo
+
+  portainer:
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    image: portainer/portainer
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - "9000:9000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    container_name: portainer
+
+  #  supervisord:
+  #    restart: always
+  #    logging:
+  #      driver: json-file
+  #      options:
+  #        max-size: "100M"
+  #        max-file: "10"
+  #    environment:
+  #      - TZ=Asia/Shanghai
+  #    depends_on:
+  #      - redis
+  #      - es
+  #      - rabbitmq
+  #    links:
+  #      - redis
+  #      - es
+  #      - rabbitmq
+  #    volumes:
+  #      - ../:/server:rw
+  #      - ./php/php.ini:/usr/local/etc/php/php.ini:ro
+  #      - ./php/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+  #      - ./php/supervisor/supervisord.conf:/etc/supervisor/supervisord.conf:ro
+  #      - ./php/policy.xml:/etc/ImageMagick-6/policy.xml
+  #    image: zengfa/php:72
+  #    container_name: supervisord
+  #    entrypoint: /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
+
+
+  #allinurl/goaccess
+
+  mongo:
+    container_name: mongo
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+    volumes:
+      - ./mongodb/data:/data/db
+  #    ports:
+  #      - 27017:27017
+
+  go:
+    container_name: go
+    image: golang
+    restart: always
+    tty: true
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    ports:
+      - "8280-8290:8280-8290"
+    links:
+      - mysql
+      - redis
+    volumes:
+      - ../go-lang/src:/go/src:rw
+
+  nginxwebui:
+    container_name: nginxwebui
+    image: cym1102/nginxwebui:latest
+    environment:
+      - BOOT_OPTIONS="--server.port=8080"
+    restart: always
+    tty: true
+    privileged: true   #root权限
+    logging:
+      driver: json-file
+      options:
+        max-size: "100M"
+        max-file: "10"
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql_data:
+    driver: local
+  mysql_slave_data:
+    driver: local
+  es_data:
+    driver: local
