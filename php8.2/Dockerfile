@@ -84,7 +84,6 @@ RUN apt-get update -y && apt-get install --assume-yes apt-utils && \
     mv composer.phar /usr/local/bin/composer && \
     # 跟换镜像源
 #    composer config -g repo.packagist composer https://mirrors.aliyun.com/composer && \
-    composer config -g repo.packagist composer https://packagist.org && \
     ###########################################################################
     # PHP EXTEND bcmath
     ###########################################################################
