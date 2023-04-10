@@ -1,1 +1,0 @@
-0 3 * * * bash /db_backup.sh
